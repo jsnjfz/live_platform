@@ -93,3 +93,15 @@ DOWNLOADER_MIDDLEWARES = {
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+ITEM_PIPELINES = {
+    'jsuser.pipelines.WebcrawlerScrapyPipeline': 300,
+}
+
+#Mysql数据库的配置信息
+MYSQL_HOST = '127.0.0.1'
+MYSQL_DBNAME = 'testdb'         #数据库名字，请修改
+MYSQL_USER = 'root'             #数据库账号，请修改
+MYSQL_PASSWD = 'root'         #数据库密码，请修改
+
+MYSQL_PORT = 3306               #数据库端口，在dbhelper中使用

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import scrapy
+from ..items import LivePlatformItem
 
 
 class BooksSpider(scrapy.Spider):
@@ -45,8 +46,13 @@ class BooksSpider(scrapy.Spider):
         print "****watch_num:****" + watch_num
         print "****follow_num:****" + follow_num
 
+        item = LivePlatformItem()
+        item['name'] = title.encode('utf-8')
+        item['watch_num'] = watch_num.encode('utf-8')
+        item['follow_num'] = follow_num.encode('utf-8')
+
         with open("test", 'a+') as f:
-            f.write( "****title:****" + title.encode('utf-8') + "\n")
+            f.write( "****title:****" + title.encode('utf-8') + "****watch_num:****" + watch_num.encode('utf-8') + "****follow_num:****" + follow_num.encode('utf-8') + "\n")
 
         # page = response.url.split("/")[-1]
         # title = title.replace("/", "-").replace("?", "-").replace("?", "-").replace(":", "-").replace("*", "-").replace("<", "-").replace(">", "-").replace('"', '-')
