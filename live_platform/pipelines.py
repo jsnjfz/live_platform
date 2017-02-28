@@ -27,7 +27,7 @@ class LivePlatformPipeline(object):
             user=settings['MYSQL_USER'],
             passwd=settings['MYSQL_PASSWD'],
             charset='utf8',  # 编码要加上，否则可能出现中文乱码问题
-            cursorclass=MySQLdb.cursors.DictCursor,
+            # cursorclass=MySQLdb.cursors.DictCursor,
             use_unicode=False,
         )
         dbpool = adbapi.ConnectionPool('MySQLdb', **dbparams)  # **表示将字典扩展为关键字参数,相当于host=xxx,db=yyy....
@@ -42,8 +42,8 @@ class LivePlatformPipeline(object):
     # 写入数据库中
     # SQL语句在这里
     def _conditional_insert(self, tx, item):
-        sql = "insert into jsbooks(author,title,url,pubday,comments,likes,rewards,views) values(%s,%s,%s,%s,%s,%s,%s,%s)"
-        params = (item['author'], item['title'], item['url'], item['pubday'],item['comments'],item['likes'],item['rewards'],item['reads'])
+        sql = "insert into platform(platform_name,platform_type,channel_name,room_id,name,watch_num,follow_num,room_desc) values(%s,%s,%s,%s,%s,%s,%s,%s)"
+        params = ('斗鱼', '娱乐', 'test', 'test',item['name'],item['watch_num'],item['follow_num'],'test')
         tx.execute(sql, params)
 
     # 错误处理方法

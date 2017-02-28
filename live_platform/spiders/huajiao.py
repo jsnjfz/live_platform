@@ -51,6 +51,8 @@ class BooksSpider(scrapy.Spider):
         item['watch_num'] = watch_num.encode('utf-8')
         item['follow_num'] = follow_num.encode('utf-8')
 
+        yield item
+
         with open("test", 'a+') as f:
             f.write( "****title:****" + title.encode('utf-8') + "****watch_num:****" + watch_num.encode('utf-8') + "****follow_num:****" + follow_num.encode('utf-8') + "\n")
 

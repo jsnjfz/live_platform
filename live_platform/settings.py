@@ -95,7 +95,7 @@ DOWNLOADER_MIDDLEWARES = {
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 ITEM_PIPELINES = {
-    'jsuser.pipelines.WebcrawlerScrapyPipeline': 300,
+    'live_platform.pipelines.LivePlatformPipeline': 300,
 }
 
 #Mysql数据库的配置信息
