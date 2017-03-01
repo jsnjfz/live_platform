@@ -46,14 +46,14 @@ class BooksSpider(scrapy.Spider):
         print "****watch_num:****" + watch_num
         print "****follow_num:****" + follow_num
 
-        item = LivePlatformItem()
-        item['name'] = title.encode('utf-8')
-        item['watch_num'] = watch_num.encode('utf-8')
-        item['follow_num'] = follow_num.encode('utf-8')
+        # item = LivePlatformItem()
+        # item['name'] = title.encode('utf-8')
+        # item['watch_num'] = watch_num.encode('utf-8')
+        # item['follow_num'] = follow_num.encode('utf-8')
+        #
+        # yield item
 
-        yield item
-
-        with open("test", 'a+') as f:
+        with open("huajiao", 'a+') as f:
             f.write( "****title:****" + title.encode('utf-8') + "****watch_num:****" + watch_num.encode('utf-8') + "****follow_num:****" + follow_num.encode('utf-8') + "\n")
 
         # page = response.url.split("/")[-1]
