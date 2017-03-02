@@ -22,5 +22,6 @@ class LivePlatformItem(scrapy.Item):
     follow_num = scrapy.Field()
     url = scrapy.Field()
     room_desc = scrapy.Field()
+    room_thumb = scrapy.Field()
 
 

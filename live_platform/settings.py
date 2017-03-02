@@ -94,9 +94,9 @@ DOWNLOADER_MIDDLEWARES = {
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-# ITEM_PIPELINES = {
-#     'live_platform.pipelines.LivePlatformPipeline': 300,
-# }
+ITEM_PIPELINES = {
+    'live_platform.pipelines.LivePlatformPipeline': 300,
+}
 
 #Mysql数据库的配置信息
 MYSQL_HOST = '127.0.0.1'

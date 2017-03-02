@@ -39,11 +39,12 @@ class LivePlatformPipeline(object):
         query.addErrback(self._handle_error, item, spider)  # 调用异常处理方法
         return item
 
+
     # 写入数据库中
     # SQL语句在这里
     def _conditional_insert(self, tx, item):
-        sql = "insert into platform(platform_name,platform_type,channel_name,room_id,name,watch_num,follow_num,room_desc) values(%s,%s,%s,%s,%s,%s,%s,%s)"
-        params = ('斗鱼', '娱乐', 'test', 'test',item['name'],item['watch_num'],item['follow_num'],'test')
+        sql = "insert into platform(platform_name,platform_type,channel_name,channel_type,room_id,name,watch_num,follow_num,room_desc) values(%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        params = (item['platform_name'], item['platform_type'], item['channel_name'], item['channel_type'], item['room_id'], item['name'], item['watch_num'], item['follow_num'],item['room_desc'])
         tx.execute(sql, params)
 
     # 错误处理方法

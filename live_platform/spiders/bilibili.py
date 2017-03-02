@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import scrapy
 
-# 全部链接动态生成
 class BooksSpider(scrapy.Spider):
     name = "quanmin"
 
