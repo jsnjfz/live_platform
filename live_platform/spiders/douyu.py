@@ -55,6 +55,8 @@ class BooksSpider(scrapy.Spider):
         item['watch_num'] = room_respjson["online"]
         item['name'] = room_respjson["owner_name"]
         item['room_desc'] = room_respjson["room_name"]
+        item['url'] = 'https://www.douyu.com/' + item['room_id']
+        item['room_status'] = room_respjson["room_status"]
 
         # url = scrapy.Field()
 
