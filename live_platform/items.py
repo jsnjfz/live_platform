@@ -23,5 +23,6 @@ class LivePlatformItem(scrapy.Item):
     url = scrapy.Field()
     room_desc = scrapy.Field()
     room_thumb = scrapy.Field()
+    room_status = scrapy.Field()
 
 
