@@ -43,11 +43,26 @@ class LivePlatformPipeline(object):
 
     # 写入数据库中
     # SQL语句在这里
+    # def _conditional_update(self, tx, item):
+    #     sql = "update index_platform set status = 0 where room_id = %s and status = 1"
+    #     params = (item['room_id'],)
+    #     tx.execute(sql, params)
+
     def _conditional_insert(self, tx, item):
         time = datetime.now()
-        sql = "insert into index_platform(platform_name,platform_type,channel_name,channel_type,room_id,name,watch_num,follow_num,room_desc,room_thumb,url,room_status,time) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-        params = (item['platform_name'], item['platform_type'], item['channel_name'], item['channel_type'], item['room_id'], item['name'], item['watch_num'], item['follow_num'],item['room_desc'],item['room_thumb'],item['url'],item['room_status'],time)
-        tx.execute(sql, params)
+
+        params = (item['room_id'],)
+        tx.execute('select 1 from index_platform where room_id = %s',params)
+        ret = tx.fetchone()
+
+        if not ret:
+            sql = "insert into index_platform(platform_name,platform_type,channel_name,channel_type,room_id,name,watch_num,follow_num,room_desc,room_thumb,url,room_status,time) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            params = (item['platform_name'], item['platform_type'], item['channel_name'], item['channel_type'], item['room_id'], item['name'], item['watch_num'], item['follow_num'],item['room_desc'],item['room_thumb'],item['url'],item['room_status'],time)
+            tx.execute(sql, params)
+        else:
+            sql = "update index_platform set follow_num = %s,watch_num = %s,time = %s,room_thumb = %s,name = %s,room_status = %s where room_id = %s"
+            params = (item['follow_num'], item['watch_num'], time, item['room_thumb'], item['name'], item['room_status'], item['room_id'],)
+            tx.execute(sql, params)
 
     # 错误处理方法
     def _handle_error(self, failue, item, spider):
