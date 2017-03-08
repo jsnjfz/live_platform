@@ -45,7 +45,7 @@ class LivePlatformPipeline(object):
     # SQL语句在这里
     def _conditional_insert(self, tx, item):
         time = datetime.now()
-        sql = "insert into platform(platform_name,platform_type,channel_name,channel_type,room_id,name,watch_num,follow_num,room_desc,room_thumb,url,room_status,time) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        sql = "insert into index_platform(platform_name,platform_type,channel_name,channel_type,room_id,name,watch_num,follow_num,room_desc,room_thumb,url,room_status,time) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         params = (item['platform_name'], item['platform_type'], item['channel_name'], item['channel_type'], item['room_id'], item['name'], item['watch_num'], item['follow_num'],item['room_desc'],item['room_thumb'],item['url'],item['room_status'],time)
         tx.execute(sql, params)
 
