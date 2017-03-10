@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 import scrapy
+import json
+
+from live_platform.items import LivePlatformItem
+
 
 class BooksSpider(scrapy.Spider):
     name = "panda"
@@ -13,39 +17,43 @@ class BooksSpider(scrapy.Spider):
 
     def parse(self, response):
         for href in response.xpath("//a[@class='video-list-item-wrap']/@href").extract():
-            print "---" + href + "---"
             yield scrapy.Request(response.urljoin(href),
                                  callback=self.parse_innerurl)
 
     def parse_innerurl(self, response):
         room_api = 'http://www.panda.tv/api_room'
         for href in response.xpath("//a[@class='video-list-item-wrap']/@href").extract():
-            print room_api + "?roomid=" + href[1:]
             yield scrapy.Request(room_api + "?roomid=" + href[1:],
                                  callback=self.parse_content)
 
     def parse_content(self, response):
-        pass
-        # print "*******" + response.xpath("//div[@class='rich_media_content ']").extract_first().encode('GB18030') + "*******"
-        # title = response.xpath("//h1[@class='room-head-info-title']/text()").extract_first().strip('\n')
-        # name = response.xpath("//span[@class='room-head-info-hostname']/text()").extract_first()
-        # # date = response.xpath("//*[@id='post-date']/text()").extract_first()
-        # watch_num = response.xpath("//div[@class='room-viewer-num']/span[1]/text()").extract_first()
-        # follow_num = response.xpath("//span[@class='w-room-title_favnum c-icon_favnum']/text()").extract_first()
-        #
-        # # print "****title:****" + title
-        # print "****name:****" + name
-        # print "****watch_num:****" + watch_num
-        # print "****follow_num:****" + follow_num
-        #
-        # with open("xiongmao", 'a+') as f:
-        #     f.write("\n" + name + watch_num + follow_num + "\n")
-        # self.log('Saved file test')
+        item = LivePlatformItem()
+        # 由于观众类型数据为动态生成，所以通过接口获取
+        js = json.loads(response.body)
 
-        # page = response.url.split("/")[-1]
-        # title = title.replace("/", "-").replace("?", "-").replace("?", "-").replace(":", "-").replace("*", "-").replace("<", "-").replace(">", "-").replace('"', '-')
-        # filename = date + "-" + title + ".html"
-        # with open(filename, 'wb') as f:
-        #     f.write(response.xpath("//div[@class='rich_media_content ']").extract_first().encode('GB18030'))
-        # self.log('Saved file %s' % filename)
+        if js['errno'] != 0:
+            print '调用接口失败: 返回错误结果'
+
+        respjson = js['data']
+
+        host_respjson = respjson['hostinfo']
+        room_respjson = respjson['roominfo']
+
+        item['platform_name'] = '熊猫'
+        item['platform_type'] = 'game'
+        item['room_thumb'] = room_respjson["pictures"]["img"]
+        item['room_id'] = room_respjson["id"]
+        item['channel_type'] = room_respjson["cate"]
+        item['channel_name'] = room_respjson["classification"]
+        item['follow_num'] = room_respjson["fans"]
+        item['watch_num'] = room_respjson["person_num"]
+        item['name'] = host_respjson["name"]
+        item['room_desc'] = room_respjson["name"]
+        item['url'] = 'https://www.panda.tv/' + item['room_id']
+        # 2在线
+        item['room_status'] = room_respjson["status"]
+
+        # url = scrapy.Field()
+
+        yield item
 

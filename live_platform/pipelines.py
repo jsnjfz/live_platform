@@ -51,8 +51,9 @@ class LivePlatformPipeline(object):
     def _conditional_insert(self, tx, item):
         time = datetime.now()
 
-        params = (item['room_id'],)
-        tx.execute('select 1 from index_platform where room_id = %s',params)
+        params = (item['room_id'], item['platform_name'],)
+
+        tx.execute("select 1 from index_platform where room_id = %s and platform_name = %s", params)
         ret = tx.fetchone()
 
         if not ret:
