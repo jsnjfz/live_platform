@@ -22,9 +22,10 @@ class BooksSpider(scrapy.Spider):
 
     def parse_innerurl(self, response):
         room_api = 'http://www.panda.tv/api_room'
+        headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:48.0) Gecko/20100101 Firefox/48.0'}
         for href in response.xpath("//a[@class='video-list-item-wrap']/@href").extract():
             yield scrapy.Request(room_api + "?roomid=" + href[1:],
-                                 callback=self.parse_content)
+                                 callback=self.parse_content, headers=headers)
 
     def parse_content(self, response):
         item = LivePlatformItem()
