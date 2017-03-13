@@ -39,7 +39,7 @@ class BooksSpider(scrapy.Spider):
         host_respjson = respjson['hostinfo']
         room_respjson = respjson['roominfo']
 
-        item['platform_name'] = '熊猫'
+        item['platform_name'] = '熊猫TV'
         item['platform_type'] = 'game'
         item['room_thumb'] = room_respjson["pictures"]["img"]
         item['room_id'] = room_respjson["id"]

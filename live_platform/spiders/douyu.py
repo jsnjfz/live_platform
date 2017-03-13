@@ -45,7 +45,7 @@ class BooksSpider(scrapy.Spider):
 
         room_respjson = js['data']
 
-        item['platform_name'] = '斗鱼'
+        item['platform_name'] = '斗鱼TV'
         item['platform_type'] = 'game'
         item['room_thumb'] = room_respjson["room_thumb"]
         item['room_id'] = room_respjson["room_id"]
