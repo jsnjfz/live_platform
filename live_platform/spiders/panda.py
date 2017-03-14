@@ -7,6 +7,7 @@ from live_platform.items import LivePlatformItem
 
 class BooksSpider(scrapy.Spider):
     name = "panda"
+    des = "熊猫TV"
 
     # CHANNEL_LIST_API = 'http://api.m.panda.tv/ajax_get_all_subcate'
     # ROOM_LIST_API = 'http://www.panda.tv/ajax_sort'

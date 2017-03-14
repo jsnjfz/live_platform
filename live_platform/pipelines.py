@@ -16,6 +16,7 @@ class LivePlatformPipeline(object):
     def __init__(self, dbpool):
         self.dbpool = dbpool
 
+
     @classmethod
     def from_settings(cls, settings):
         '''1、@classmethod声明一个类方法，而对于平常我们见到的叫做实例方法。
@@ -32,6 +33,7 @@ class LivePlatformPipeline(object):
             use_unicode=False,
         )
         dbpool = adbapi.ConnectionPool('MySQLdb', **dbparams)  # **表示将字典扩展为关键字参数,相当于host=xxx,db=yyy....
+
         return cls(dbpool)  # 相当于dbpool付给了这个类，self中可以得到
 
     # pipeline默认调用
@@ -39,6 +41,14 @@ class LivePlatformPipeline(object):
         query = self.dbpool.runInteraction(self._conditional_insert, item)  # 调用插入的方法
         query.addErrback(self._handle_error, item, spider)  # 调用异常处理方法
         return item
+
+    def open_spider(self, spider):
+        spider.conn = MySQLdb.connect(user='root', passwd='cl891227', db='platform', host='127.0.0.1', charset="utf8",
+                                    use_unicode=False)
+        spider.cursor = spider.conn.cursor()
+        param = (spider.des,)
+        spider.cursor.execute("delete from index_platform where platform_name = %s", param)
+        spider.conn.commit()
 
 
     # 写入数据库中
@@ -53,17 +63,20 @@ class LivePlatformPipeline(object):
 
         params = (item['room_id'], item['platform_name'],)
 
-        tx.execute("select 1 from index_platform where room_id = %s and platform_name = %s", params)
+        tx.execute("select 1 from index_platform_bak where room_id = %s and platform_name = %s", params)
         ret = tx.fetchone()
 
         if not ret:
-            sql = "insert into index_platform(platform_name,platform_type,channel_name,channel_type,room_id,name,watch_num,follow_num,room_desc,room_thumb,url,room_status,time) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            sql = "insert into index_platform_bak(platform_name,platform_type,channel_name,channel_type,room_id,name,watch_num,follow_num,room_desc,room_thumb,url,room_status,time) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
             params = (item['platform_name'], item['platform_type'], item['channel_name'], item['channel_type'], item['room_id'], item['name'], item['watch_num'], item['follow_num'],item['room_desc'],item['room_thumb'],item['url'],item['room_status'],time)
             tx.execute(sql, params)
-        else:
-            sql = "update index_platform set follow_num = %s,watch_num = %s,time = %s,room_thumb = %s,name = %s,room_status = %s where room_id = %s"
-            params = (item['follow_num'], item['watch_num'], time, item['room_thumb'], item['name'], item['room_status'], item['room_id'],)
-            tx.execute(sql, params)
+
+        sql_insert = "insert into index_platform(platform_name,platform_type,channel_name,channel_type,room_id,name,watch_num,follow_num,room_desc,room_thumb,url,room_status,time) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        params = (
+        item['platform_name'], item['platform_type'], item['channel_name'], item['channel_type'], item['room_id'],
+        item['name'], item['watch_num'], item['follow_num'], item['room_desc'], item['room_thumb'], item['url'],
+        item['room_status'], time)
+        tx.execute(sql_insert, params)
 
     # 错误处理方法
     def _handle_error(self, failue, item, spider):

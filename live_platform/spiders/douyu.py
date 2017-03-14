@@ -6,6 +6,7 @@ from ..items import LivePlatformItem
 
 class BooksSpider(scrapy.Spider):
     name = "douyu"
+    des = "斗鱼TV"
 
     # allowed_domains = ['http://chuansong.me/']
     start_urls = ['https://www.douyu.com/directory']
