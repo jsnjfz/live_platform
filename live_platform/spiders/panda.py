@@ -51,7 +51,7 @@ class BooksSpider(scrapy.Spider):
         item['watch_num'] = room_respjson["person_num"]
         item['name'] = host_respjson["name"]
         item['room_desc'] = room_respjson["name"]
-        item['url'] = 'https://www.panda.tv/' + item['room_id']
+        item['url'] = 'http://www.panda.tv/' + item['room_id']
         # 2在线
         item['room_status'] = room_respjson["status"]
 
