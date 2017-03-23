@@ -1,64 +1,48 @@
 # -*- coding: utf-8 -*-
-import scrapy
+from scrapy import Spider, Request
 
-# 全部链接动态生成
-class BooksSpider(scrapy.Spider):
-    name = "quanmin"
+from ..items import LivePlatformItem
 
-    # allowed_domains = ['http://www.huajiao.com/']
-    start_urls = ['https://www.quanmin.tv/game/lol']
+import json
 
-    # def parse(self, response):
-    #     # "//a[@target='_blank']/@href" 从category爬取用
-    #     for href in response.xpath("//a[@class='g-trans p-category_card animated fadeInUp']/@href").extract():
-    #         print "---" + href + "---"
-    #         yield scrapy.Request(response.urljoin(href),
-    #                              callback=self.parse_innerurl)
 
-    # def parse_innerurl(self, response):
-    #     for href in response.xpath("//*[@id='live-list-contentbox']/li/a/@href").extract():
-    #         yield scrapy.Request(response.urljoin(href),
-    #                              callback=self.parse_content)
-    #
-    #     next_page = response.xpath("//a[@class='w-paging_btn w-paging_ctrl w-paging_next false']/@href").extract_first()
-    #     if next_page is not None:
-    #         next_page = response.urljoin(next_page)
-    #         yield scrapy.Request(next_page, callback=self.parse_innerurl)
+class BooksSpider(Spider):
+    name = "zhanqi"
+    des = "战旗TV"
 
+    allowed_domains = ['zhanqi.tv']
+    start_urls = [
+        'https://www.zhanqi.tv/api/static/game.lists/300-1.json'
+    ]
 
     def parse(self, response):
-        for href in response.xpath("//*[@id='live-list-contentbox']/li/a/@href").extract():
-            yield scrapy.Request(response.urljoin(href),
-                                 callback=self.parse_content)
+        room_query_list = []
+        for cjson in json.loads(response.text)['data']['games']:
+            url = 'https://www.zhanqi.tv/api/static/game.lives/{}/200-{{}}.json'.format(cjson['id'])
+            room_query_list.append({'url': url, 'channel': cjson['gameKey'], 'page': 1})
+        for room_query in room_query_list:
+            yield Request(room_query['url'].format(str(room_query['page'])), callback=self.parse_room_list,
+                          meta=room_query)
 
-        next_page = response.xpath("//a[@class='w-paging_btn w-paging_ctrl w-paging_next false']/@href").extract_first()
-        if next_page is not None:
-            next_page = response.urljoin(next_page)
-            yield scrapy.Request(next_page, callback=self.parse)
-
-
-
-    def parse_content(self, response):
-        # print "*******" + response.xpath("//div[@class='rich_media_content ']").extract_first().encode('GB18030') + "*******"
-        title = response.xpath("//h1[@class='w-room-title_name']/text()").extract_first().strip()
-        name = response.xpath("//span[@class='w-room-title_red']/text()").extract_first()
-        # date = response.xpath("//*[@id='post-date']/text()").extract_first()
-        watch_num = response.xpath("//span[@class='w-room-title_red js-online']/text()").extract_first()
-        follow_num = response.xpath("//span[@class='w-room-title_favnum c-icon_favnum']/text()").extract_first()
-
-        print "****title:****" + title
-        print "****name:****" + name
-        print "****watch_num:****" + watch_num
-        print "****follow_num:****" + follow_num
-
-        with open("quanmin", 'a+') as f:
-            f.write("\n" + title + watch_num + follow_num + "\n")
-        self.log('Saved file test')
-
-        # page = response.url.split("/")[-1]
-        # title = title.replace("/", "-").replace("?", "-").replace("?", "-").replace(":", "-").replace("*", "-").replace("<", "-").replace(">", "-").replace('"', '-')
-        # filename = date + "-" + title + ".html"
-        # with open(filename, 'wb') as f:
-        #     f.write(response.xpath("//div[@class='rich_media_content ']").extract_first().encode('GB18030'))
-        # self.log('Saved file %s' % filename)
-
+    def parse_room_list(self, response):
+        room_list = json.loads(response.text)['data']['rooms']
+        if isinstance(room_list, list):
+            for rjson in room_list:
+                yield LivePlatformItem({
+                    'platform_name': '战旗TV',
+                    'platform_type': 'game',
+                    'room_thumb': rjson['spic'], # spic 小图,bpic 大图
+                    'room_id': rjson['id'],
+                    'channel_type': response.meta['channel'],
+                    'channel_name': rjson['gameName'],
+                    'follow_num': 999,
+                    'watch_num': rjson['online'],
+                    'name': rjson['nickname'],
+                    'room_desc': rjson['title'],
+                    'url': response.urljoin(rjson['url']),
+                    'room_status': rjson['status'],
+                })
+            if len(room_list) > 0:
+                next_meta = dict(response.meta, page=response.meta['page'] + 1)
+                yield Request(next_meta['url'].format(str(next_meta['page'])), callback=self.parse_room_list,
+                              meta=next_meta)

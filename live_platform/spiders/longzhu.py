@@ -1,63 +1,83 @@
 # -*- coding: utf-8 -*-
-import scrapy
+from scrapy import Spider, Request
 
-class BooksSpider(scrapy.Spider):
-    name = "quanmin"
+from ..items import LivePlatformItem
 
-    # allowed_domains = ['http://www.huajiao.com/']
-    start_urls = ['https://www.quanmin.tv/game/lol']
+import json
 
-    # def parse(self, response):
-    #     # "//a[@target='_blank']/@href" 从category爬取用
-    #     for href in response.xpath("//a[@class='g-trans p-category_card animated fadeInUp']/@href").extract():
-    #         print "---" + href + "---"
-    #         yield scrapy.Request(response.urljoin(href),
-    #                              callback=self.parse_innerurl)
 
-    # def parse_innerurl(self, response):
-    #     for href in response.xpath("//*[@id='live-list-contentbox']/li/a/@href").extract():
-    #         yield scrapy.Request(response.urljoin(href),
-    #                              callback=self.parse_content)
-    #
-    #     next_page = response.xpath("//a[@class='w-paging_btn w-paging_ctrl w-paging_next false']/@href").extract_first()
-    #     if next_page is not None:
-    #         next_page = response.urljoin(next_page)
-    #         yield scrapy.Request(next_page, callback=self.parse_innerurl)
-
+class LongZhuSpider(Spider):
+    name = 'longzhu'
+    des = "龙珠TV"
+    allowed_domains = ['longzhu.com', 'plu.cn']
+    start_urls = [
+        'http://www.longzhu.com/channels'
+    ]
 
     def parse(self, response):
-        for href in response.xpath("//*[@id='live-list-contentbox']/li/a/@href").extract():
-            yield scrapy.Request(response.urljoin(href),
-                                 callback=self.parse_content)
+        channel_list = {}
+        for div_element in response.xpath('//div[@class="list-item-thumb"]'):
+            a_element = div_element.xpath('a')[0]
+            url = a_element.xpath('@href').extract_first()
+            short = url[url.rfind('/') + 1:]
+            name = a_element.xpath('@title').extract_first()
+            image = a_element.xpath('img/@src').extract_first()
+            channel_list[short] = {
+                'short': short,
+                'name': name,
+                'image': image,
+                'url': response.urljoin(url),
+                'sent': False
+            }
+        room_query = {
+            'url': 'http://api.plu.cn/tga/streams?max-results=50&sort-by=top',
+            'offset': 0, 'channels': channel_list
+        }
+        yield Request('{}&start-index=0'.format(room_query['url']), callback=self.parse_room_list, meta=room_query)
 
-        next_page = response.xpath("//a[@class='w-paging_btn w-paging_ctrl w-paging_next false']/@href").extract_first()
-        if next_page is not None:
-            next_page = response.urljoin(next_page)
-            yield scrapy.Request(next_page, callback=self.parse)
+    def parse_room_list(self, response):
+        channel_list = response.meta['channels']
+        room_list = json.loads(response.text)['data']['items']
+        if isinstance(room_list, list):
+            for mixjson in room_list:
+                cjson = mixjson['game'][0]
+                if not cjson['tag']:
+                    continue
+                # if cjson['tag'] in channel_list:
+                #     if not channel_list[cjson['tag']]['sent']:
+                #         channel_list[cjson['tag']]['sent'] = True
+                #         yield ChannelItem({
+                #             'office_id': str(cjson['id']),
+                #             'short': channel_list[cjson['tag']]['short'],
+                #             'name': channel_list[cjson['tag']]['name'],
+                #             'image': channel_list[cjson['tag']]['image'],
+                #             'url': channel_list[cjson['tag']]['url']
+                #         })
+                # else:
+                #     yield ChannelItem({
+                #         'office_id': str(cjson['id']),
+                #         'short': cjson['tag'],
+                #         'name': cjson['name'],
+                #         'url': 'http://www.longzhu.com/channels/' + cjson['tag']
+                #     })
+                rjson = mixjson['channel']
 
-
-
-    def parse_content(self, response):
-        # print "*******" + response.xpath("//div[@class='rich_media_content ']").extract_first().encode('GB18030') + "*******"
-        title = response.xpath("//h1[@class='w-room-title_name']/text()").extract_first().strip()
-        name = response.xpath("//span[@class='w-room-title_red']/text()").extract_first()
-        # date = response.xpath("//*[@id='post-date']/text()").extract_first()
-        watch_num = response.xpath("//span[@class='w-room-title_red js-online']/text()").extract_first()
-        follow_num = response.xpath("//span[@class='w-room-title_favnum c-icon_favnum']/text()").extract_first()
-
-        print "****title:****" + title
-        print "****name:****" + name
-        print "****watch_num:****" + watch_num
-        print "****follow_num:****" + follow_num
-
-        with open("quanmin", 'a+') as f:
-            f.write("\n" + title + watch_num + follow_num + "\n")
-        self.log('Saved file test')
-
-        # page = response.url.split("/")[-1]
-        # title = title.replace("/", "-").replace("?", "-").replace("?", "-").replace(":", "-").replace("*", "-").replace("<", "-").replace(">", "-").replace('"', '-')
-        # filename = date + "-" + title + ".html"
-        # with open(filename, 'wb') as f:
-        #     f.write(response.xpath("//div[@class='rich_media_content ']").extract_first().encode('GB18030'))
-        # self.log('Saved file %s' % filename)
-
+                yield LivePlatformItem({
+                    'platform_name': '龙珠TV',
+                    'platform_type': 'game',
+                    'room_thumb': mixjson['preview'],
+                    'room_id': rjson['id'],
+                    'channel_type': cjson['tag'],
+                    'channel_name': cjson['name'],
+                    'follow_num': rjson['followers'],
+                    'watch_num': mixjson['viewers'],
+                    'name': rjson['name'],
+                    'room_desc': rjson['status'],
+                    'url': rjson['url'],
+                    'room_status': rjson['_type'],
+                })
+            if len(room_list) > 0:
+                next_meta = response.meta
+                next_meta['offset'] += 50
+                yield Request('{}&start-index={}'.format(next_meta['url'], str(next_meta['offset'])),
+                              callback=self.parse_room_list, meta=next_meta)

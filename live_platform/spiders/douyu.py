@@ -11,7 +11,6 @@ class BooksSpider(scrapy.Spider):
     # allowed_domains = ['http://chuansong.me/']
     start_urls = ['https://www.douyu.com/directory']
 
-
     def parse(self, response):
         for href in response.xpath("//*[@id='live-list-contentbox']/li/a/@href").extract():
             yield scrapy.Request(response.urljoin(href),
@@ -33,8 +32,6 @@ class BooksSpider(scrapy.Spider):
         for href in response.xpath("//*[@id='live-list-contentbox']/li/a/@href").extract():
             yield scrapy.Request(room_api + href,
                                  callback=self.parse_content)
-
-
 
     def parse_content(self, response):
         item = LivePlatformItem()

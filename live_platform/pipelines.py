@@ -43,7 +43,7 @@ class LivePlatformPipeline(object):
         return item
 
     def open_spider(self, spider):
-        spider.conn = MySQLdb.connect(user='root', passwd='cl891227', db='platform', host='127.0.0.1', charset="utf8",
+        spider.conn = MySQLdb.connect(user='root', passwd='root', db='platform', host='127.0.0.1', charset="utf8",
                                     use_unicode=False)
         spider.cursor = spider.conn.cursor()
         param = (spider.des,)

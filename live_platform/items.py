@@ -4,25 +4,33 @@
 # See documentation in:
 # http://doc.scrapy.org/en/latest/topics/items.html
 
-import scrapy
+from scrapy import Item, Field
 
 
-class LivePlatformItem(scrapy.Item):
+class LivePlatformItem(Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    platform_name = scrapy.Field()
-    platform_type = scrapy.Field()
-    platform_desc = scrapy.Field()
-    channel_name = scrapy.Field()
-    channel_type = scrapy.Field()
-    channel_desc = scrapy.Field()
-    room_id = scrapy.Field()
-    name = scrapy.Field()
-    watch_num = scrapy.Field()
-    follow_num = scrapy.Field()
-    url = scrapy.Field()
-    room_desc = scrapy.Field()
-    room_thumb = scrapy.Field()
-    room_status = scrapy.Field()
+    platform_name = Field()
+    platform_type = Field()
+    platform_desc = Field()
+    channel_name = Field()
+    channel_type = Field()
+    channel_desc = Field()
+    room_id = Field()
+    name = Field()
+    watch_num = Field()
+    follow_num = Field()
+    url = Field()
+    room_desc = Field()
+    room_thumb = Field()
+    room_status = Field()
+
+
+class ChannelItem(Item):
+    office_id = Field()
+    short = Field()
+    name = Field()
+    image = Field()
+    url = Field()
 
 

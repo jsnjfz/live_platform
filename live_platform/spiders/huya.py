@@ -1,63 +1,54 @@
 # -*- coding: utf-8 -*-
-import scrapy
+from scrapy import Spider, Request
 
-class BooksSpider(scrapy.Spider):
-    name = "quanmin"
+from ..items import LivePlatformItem
 
-    # allowed_domains = ['http://www.huajiao.com/']
-    start_urls = ['https://www.quanmin.tv/game/lol']
+import json
 
-    # def parse(self, response):
-    #     # "//a[@target='_blank']/@href" 从category爬取用
-    #     for href in response.xpath("//a[@class='g-trans p-category_card animated fadeInUp']/@href").extract():
-    #         print "---" + href + "---"
-    #         yield scrapy.Request(response.urljoin(href),
-    #                              callback=self.parse_innerurl)
 
-    # def parse_innerurl(self, response):
-    #     for href in response.xpath("//*[@id='live-list-contentbox']/li/a/@href").extract():
-    #         yield scrapy.Request(response.urljoin(href),
-    #                              callback=self.parse_content)
-    #
-    #     next_page = response.xpath("//a[@class='w-paging_btn w-paging_ctrl w-paging_next false']/@href").extract_first()
-    #     if next_page is not None:
-    #         next_page = response.urljoin(next_page)
-    #         yield scrapy.Request(next_page, callback=self.parse_innerurl)
+class BooksSpider(Spider):
+    name = "huya"
+    des = "虎牙TV"
 
+    allowed_domains = ['huya.com']
+    start_urls = [
+        'http://www.huya.com/g'
+    ]
 
     def parse(self, response):
-        for href in response.xpath("//*[@id='live-list-contentbox']/li/a/@href").extract():
-            yield scrapy.Request(response.urljoin(href),
-                                 callback=self.parse_content)
+        room_query_list = []
+        for a_element in response.xpath('//li[@class="game-list-item"]/a'):
+            url = a_element.xpath('@href').extract_first()
+            short = url[url.rfind('/') + 1:]
+            report_attr = json.loads(a_element.xpath('@report').extract_first())
+            office_id = report_attr['game_id']
+            img_element = a_element.xpath('img')[0]
+            name = img_element.xpath('@title').extract_first()
+            image = img_element.xpath('@data-original').extract_first()
+            url = 'http://www.huya.com/cache.php?m=LiveList&do=getLiveListByPage&tagAll=0&gameId={}'.format(office_id)
+            room_query_list.append({'url': url, 'channel': short, 'page': 1})
+        for room_query in room_query_list:
+            yield Request('{}&page=1'.format(room_query['url']), callback=self.parse_room_list, meta=room_query)
 
-        next_page = response.xpath("//a[@class='w-paging_btn w-paging_ctrl w-paging_next false']/@href").extract_first()
-        if next_page is not None:
-            next_page = response.urljoin(next_page)
-            yield scrapy.Request(next_page, callback=self.parse)
-
-
-
-    def parse_content(self, response):
-        # print "*******" + response.xpath("//div[@class='rich_media_content ']").extract_first().encode('GB18030') + "*******"
-        title = response.xpath("//h1[@class='w-room-title_name']/text()").extract_first().strip()
-        name = response.xpath("//span[@class='w-room-title_red']/text()").extract_first()
-        # date = response.xpath("//*[@id='post-date']/text()").extract_first()
-        watch_num = response.xpath("//span[@class='w-room-title_red js-online']/text()").extract_first()
-        follow_num = response.xpath("//span[@class='w-room-title_favnum c-icon_favnum']/text()").extract_first()
-
-        print "****title:****" + title
-        print "****name:****" + name
-        print "****watch_num:****" + watch_num
-        print "****follow_num:****" + follow_num
-
-        with open("quanmin", 'a+') as f:
-            f.write("\n" + title + watch_num + follow_num + "\n")
-        self.log('Saved file test')
-
-        # page = response.url.split("/")[-1]
-        # title = title.replace("/", "-").replace("?", "-").replace("?", "-").replace(":", "-").replace("*", "-").replace("<", "-").replace(">", "-").replace('"', '-')
-        # filename = date + "-" + title + ".html"
-        # with open(filename, 'wb') as f:
-        #     f.write(response.xpath("//div[@class='rich_media_content ']").extract_first().encode('GB18030'))
-        # self.log('Saved file %s' % filename)
-
+    def parse_room_list(self, response):
+        room_list = json.loads(response.text)['data']['datas']
+        if isinstance(room_list, list):
+            for rjson in room_list:
+                yield LivePlatformItem({
+                    'platform_name': '虎牙TV',
+                    'platform_type': 'game',
+                    'room_thumb': rjson['screenshot'],
+                    'room_id': rjson['uid'],
+                    'channel_type': rjson['gameHostName'],
+                    'channel_name': rjson['gameFullName'],
+                    'follow_num': 999,
+                    'watch_num': rjson['totalCount'],
+                    'name': rjson['nick'],
+                    'room_desc': rjson['roomName'],
+                    'url': response.urljoin(rjson['privateHost']),
+                    'room_status': rjson['liveSourceType'],
+                })
+            if len(room_list) > 0:
+                next_meta = dict(response.meta, page=response.meta['page'] + 1)
+                yield Request('{}&page={}'.format(next_meta['url'], str(next_meta['page'])),
+                              callback=self.parse_room_list, meta=next_meta)
