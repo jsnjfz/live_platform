@@ -50,6 +50,12 @@ class LivePlatformPipeline(object):
         spider.cursor.execute("delete from index_platform where platform_name = %s", param)
         spider.conn.commit()
 
+    def spider_closed(self, spider):
+        """ Cleanup function, called after crawing has finished to close open
+            objects.
+            Close ConnectionPool. """
+        self.dbpool.close()
+
 
     # 写入数据库中
     # SQL语句在这里
